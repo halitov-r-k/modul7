@@ -1,0 +1,102 @@
+Stream - interface Stream<T>
+package: java.util.stream
+Похожие interfaces: IntStream, LongStream, DoubleStream для работы с соответствующими примитивными типами данных.
+Stream - представляет собой последовательность элементов потенциально бесконечная. С возможностью применять к ней
+преобразования (простые, сложные, многоэтапные) без циклов и условных операторов. То есть программа будет иметь линейную
+структуру. Содержит много методов. Содержит не только средства обхода элементов, а средства описания алгоритмов
+обработки и преобразования последовательностей.
+
+Итератор простой объект, который может выдавать объекты по одному.
+
+Отличия Коллекций и Streams
+Коллекции предназначены для хранения элементов.
+Они конечны.
+Предоставляют индивидуальный доступ к своим элементам (по индексу, по ключу).
+Можно менять (добавлять, удалять) элементы. В том числе через итератор.
+Stream бесконечны.
+Не может позволить индивидуального доступа к элементу.
+Применение трансформации к Stream не влияет на источник из которого он берется.
+
+Использование Stream состоит из 3-х частей: получение Stream, операции преобразования, терминальная операция.
+Stream является Autocloseable. Может использоваться в конструкции: try with resource.
+Опционально может быть операция закрытия Stream: вызов метода .close() обязателен только если Stream выделял
+какие-то системные ресурсы (файл).
+
+Получение Stream - откуда будет браться элементы последовательности.
+Способы получения Stream:
+ из любой коллекции методом .stream();
+ из BufferedReader методом .lines(); - возвращает  String-stream; (использовать try with resource)
+ из директории на диске методами: (использовать try with resource)
+    Files.list(path); // Возвращает содержимое директории на 1 уровень.
+    Files.walk(path); // Возвращает содержимое директории С вложенными директориями (рекурсивный обход)
+из String используя метод .chars() // возвращает Char-stream в виде IntStream.
+(Динамическое получение Streams)
+генерировать при помощи Supplier методом .generate(Math :: random);
+ (Supplier - interface with only method get())
+ Последовательно один за другим возвращает элементы последовательности.
+итерировать из функции:  .iterator(0, n -> n + 1);
+получить диапазон (для целых чисел):
+    IntStream.range(0, 100); //(1..99)
+    IntStream.rangeClosed(0, 100); //(1..100)
+конкатенацией 2-x Streams: IntStream.concat(stream1, stream2);
+создать пустой Stream: IntStream.empty();
+получить Stream из Array:
+ double[] array;
+ DoubleStream streamFromArray = Arrays.stream(array);
+перечислить  Stream-элементы явно:
+ IntStream streamOfElements = IntStream.of(2, 4, 6, 8, 10);
+
+Операции преобразования Stream.
+ Может быть от нуля до нескольких.л
+ Stream их запоминает, но не выполняет.
+stream
+.filter(predicate); predicate n -> n > 100;
+.mapToObj(Integer :: toString); //функция которая из каждого элемента Stream делает новый элемент другого типа
+.flatMapToInt(s -> s.chars(Function)); //принимает функцию превращающую в String, конкатенирует полученные Stream в один
+.distinct(); //убирает из Stream дубликаты;
+.sorted(); // сортирует элементы по порядку по возрастанию. если Object то можно передать Comparator
+.skip(int); //пропускает количество элементов.
+.limit(int); // ограничивает количество элементов.
+.peek(Consumer); // показывает элементы на текущем этапе работы (System.out::println)
+
+Терминальная операция.
+Вызывается только один раз.
+Запускает Stream на исполнение.
+Выдает полезный результат.
+
+IntStream stream1 = ...;
+stream1.forEach(System.out :: println); // Принимает Consumer (println) которому передадутся все Stream-elements
+
+IntStream stream2 = ...;
+OptionalInt result = stream2.findFirst(); // Возвращает первый Stream-element
+OptionalInt result = stream2.findAny();// Возвращает любой Stream-element
+
+Stream<String> stream3 = ...;
+boolean allStringsAreAtLeast10Chars = stream3.allMatch(s -> s.length() > 10);
+//Проверяет что все Stream-elements удовлетворяют заданному условию
+boolean allStringsAreAtLeast10Chars = stream3.anyMatch(s -> s.length() > 10);
+//Проверяет что хотя бы один Stream-element удовлетворяют заданному условию
+boolean allStringsAreAtLeast10Chars = stream3.noneMatch(s -> s.length() > 10);
+//Проверяет что ни один Stream-element не удовлетворяет заданному условию
+
+Stream<String> stream4 = ...;
+Optional<String> minString = stream4.min(Comparator.comparing(String::length Integer::compare));
+//Возвращает Stream-element-min
+Optional<String> minString = stream4.max(Comparator.comparing(String::length Integer::compare));
+//Возвращает Stream-element-max
+
+IntStream stream5 = ...;
+int count = stream5.count();
+//Возвращает количество элементов в Stream;
+
+IntStream stream6 = ...;
+int count = stream6.sum();
+//Возвращает сумму элементов в Stream;
+
+Stream<String> stream7 = ...;
+List<String> list = stream7.collect(Collectors.toList());
+// собирает Stream-elements в Коллекцию.
+
+Stream<BigInteger> bigInts = ...;
+BigInteger sum = bigInts.reduce(BigInteger.ZERO, BigInteger::add);
+// Вычисляет свертку Stream-elements
